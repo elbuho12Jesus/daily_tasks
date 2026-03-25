@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Temas del día</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a33;
+      --panel2:#0f1730;
+      --text:#e9ecff;
+      --muted:#aab2e6;
+      --accent:#7aa2ff;
+      --border:rgba(255,255,255,.12);
+      --good:#54e1b5;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% 0%, #16204a 0%, var(--bg) 55%),
+                  radial-gradient(900px 600px at 90% 20%, #1a2b55 0%, transparent 60%);
+      color:var(--text);
+      line-height:1.45;
+    }
+    header{
+      padding:28px 18px 14px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    h1{margin:0 0 6px; font-size:28px; letter-spacing:.2px;}
+    header p{margin:0; color:var(--muted);}
+
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px 32px;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card .hd h2{margin:0; font-size:15px; color:var(--muted); font-weight:650; text-transform:uppercase; letter-spacing:.9px;}
+    .card .bd{padding:14px;}
+
+    .btn{
+      background: rgba(122,162,255,.15);
+      color:var(--text);
+      border:1px solid rgba(122,162,255,.35);
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:650;
+    }
+    .btn:hover{background: rgba(122,162,255,.22);}
+    .btn:active{transform: translateY(1px);}
+
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      font-weight:600;
+      color:var(--muted);
+    }
+    .btn.secondary:hover{background: rgba(255,255,255,.09);}
+
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px;}
+    input, textarea{
+      width:100%;
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 11px;
+      outline:none;
+    }
+    textarea{min-height:120px; resize:vertical;}
+    input:focus, textarea:focus{border-color: rgba(122,162,255,.55); box-shadow: 0 0 0 3px rgba(122,162,255,.12);}
+
+    .topic-list{display:flex; flex-direction:column; gap:10px;}
+    .topic-item{
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background: rgba(0,0,0,.18);
+      cursor:pointer;
+    }
+    .topic-item:hover{border-color: rgba(122,162,255,.5);}
+    .topic-item.active{border-color: rgba(84,225,181,.65); background: rgba(84,225,181,.10);}
+    .topic-item .t{font-weight:750;}
+    .topic-item .m{color:var(--muted); font-size:12px; margin-top:4px;}
+
+    .content h2{margin:0 0 6px; font-size:20px;}
+    .content .meta{color:var(--muted); font-size:12px; margin-bottom:12px;}
+
+    .pill{
+      display:inline-block;
+      font-size:12px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color:var(--muted);
+    }
+
+    .row{display:flex; gap:10px; align-items:center;}
+    .row > *{flex:1;}
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .md{
+      white-space:pre-wrap;
+      background: rgba(0,0,0,.16);
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 12px;
+      padding: 12px;
+      overflow:auto;
+    }
+    .md code{background: rgba(255,255,255,.08); padding:2px 5px; border-radius:7px;}
+
+    .hint{color:var(--muted); font-size:12px; margin-top:10px;}
+
+    @media (max-width: 940px){
+      main{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Temas del día</h1>
+    <p>Un bloc simple para organizar y editar tus apuntes. Puedes crear temas, seleccionar uno, editar su contenido y exportar/importar.</p>
+  </header>
+
+  <main>
+    <section class="card" aria-label="Lista de temas">
+      <div class="hd">
+        <h2>Temas</h2>
+        <div class="toolbar">
+          <button class="btn secondary" id="btnExport">Exportar JSON</button>
+          <button class="btn secondary" id="btnImport">Importar JSON</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+          <button class="btn" id="btnNew">+ Nuevo tema</button>
+          <button class="btn secondary" id="btnDelete" title="Eliminar el tema seleccionado">Eliminar</button>
+        </div>
+        <div class="topic-list" id="topicList"></div>
+        <p class="hint">Nota: este archivo no guarda automáticamente entre recargas. Usa Exportar/Importar para guardar tu trabajo.</p>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Editor de tema">
+      <div class="hd">
+        <h2>Editor</h2>
+        <span class="pill" id="pillStatus">Listo</span>
+      </div>
+      <div class="bd content">
+        <div class="row" style="margin-bottom:10px;">
+          <div>
+            <label for="title">Título</label>
+            <input id="title" placeholder="Ej: Función Beta Splatting" />
+          </div>
+          <div>
+            <label for="tag">Etiqueta</label>
+            <input id="tag" placeholder="Ej: splatting" />
+          </div>
+        </div>
+
+        <label for="body">Contenido (texto/markdown simple)</label>
+        <textarea id="body" spellcheck="false"></textarea>
+
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <button class="btn" id="btnSave">Guardar cambios</button>
+          <button class="btn secondary" id="btnPreview">Vista previa</button>
+          <button class="btn secondary" id="btnCopy">Copiar</button>
+        </div>
+
+        <div id="previewWrap" style="display:none; margin-top:14px;">
+          <div class="meta">Vista previa (texto + LaTeX con MathJax; no ejecuta HTML arbitrario):</div>
+          <div class="md" id="preview"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MathJax (LaTeX) via cdnjs -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+      }
+    };
+  </script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    const initialTopics = [
+      {
+        id: crypto.randomUUID(),
+        title: "Tema 1: Función Beta Splatting (DBS)",
+        tag: "beta-splatting",
+        body:
+`En Deformable Beta Splatting (DBS), la variable x en la función:\n\nB(x; b) = (1 - x)^{\u03b2(b)},\n\nno es una coordenada 2D/3D directamente. Es un escalar adimensional que representa una distancia normalizada al centro del splat, medida con el métrico elíptico inducido por la covarianza proyectada.\n\nDefinición práctica (por píxel):\n\n1) Para un splat i, proyectas el centro \u03bc_i a pantalla \u03bc'_i \u2208 R^2.\n2) Proyectas su covarianza 3D a covarianza 2D \u03a3'_i (aprox. afín, usando Jacobiano).\n3) Para un píxel x_pix \u2208 R^2 defines \u0394 = x_pix - \u03bc'_i.\n4) Radio elíptico al cuadrado (Mahalanobis):\n\n   r_i(x_pix)^2 = \u0394^T (\u03a3'_i)^{-1} \u0394\n\n5) El argumento del kernel Beta es exactamente:\n\n   x := r_i(x_pix)^2\n\nAsí, el peso/opacidad efectiva del splat en el píxel se puede escribir como:\n\n- Si r^2 \u2264 1:  \u03b1_i(x_pix) = o_i (1 - r^2)^{\u03b2(b_i)}\n- Si r^2 > 1:   \u03b1_i(x_pix) = 0\n\nInterpretación geométrica: r^2 = 1 define una elipse en pantalla; dentro de esa elipse, el kernel Beta cae según \u03b2(b).`
+      }
+    ];
+
+    let topics = structuredClone(initialTopics);
+    let selectedId = topics[0].id;
+
+    const elTopicList = document.getElementById('topicList');
+    const elTitle = document.getElementById('title');
+    const elTag = document.getElementById('tag');
+    const elBody = document.getElementById('body');
+    const elPill = document.getElementById('pillStatus');
+    const elPreviewWrap = document.getElementById('previewWrap');
+    const elPreview = document.getElementById('preview');
+
+    function setStatus(text, kind='idle'){
+      elPill.textContent = text;
+      const map = {
+        idle: 'rgba(255,255,255,.06)',
+        ok: 'rgba(84,225,181,.14)',
+        warn: 'rgba(255,199,0,.14)'
+      };
+      elPill.style.background = map[kind] || map.idle;
+      elPill.style.borderColor = 'rgba(255,255,255,.12)';
+      elPill.style.color = kind === 'ok' ? '#dffcf2' : '#aab2e6';
+    }
+
+    function renderList(){
+      elTopicList.innerHTML = '';
+      topics.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'topic-item' + (t.id === selectedId ? ' active' : '');
+        div.tabIndex = 0;
+        div.innerHTML = `<div class="t">${escapeHtml(t.title || 'Sin título')}</div>
+                         <div class="m">Etiqueta: ${escapeHtml(t.tag || '—')}</div>`;
+        div.onclick = () => { selectedId = t.id; loadSelected(); renderList(); };
+        div.onkeydown = (e) => {
+          if(e.key === 'Enter' || e.key === ' '){
+            e.preventDefault();
+            selectedId = t.id; loadSelected(); renderList();
+          }
+        };
+        elTopicList.appendChild(div);
+      });
+    }
+
+    function loadSelected(){
+      const t = topics.find(x => x.id === selectedId);
+      if(!t) return;
+      elTitle.value = t.title || '';
+      elTag.value = t.tag || '';
+      elBody.value = t.body || '';
+      elPreviewWrap.style.display = 'none';
+      setStatus('Listo', 'idle');
+    }
+
+    function saveSelected(){
+      const idx = topics.findIndex(x => x.id === selectedId);
+      if(idx < 0) return;
+      topics[idx] = {
+        ...topics[idx],
+        title: elTitle.value.trim() || 'Sin título',
+        tag: elTag.value.trim(),
+        body: elBody.value
+      };
+      setStatus('Guardado', 'ok');
+      renderList();
+    }
+
+    function newTopic(){
+      const t = {
+        id: crypto.randomUUID(),
+        title: `Tema ${topics.length + 1}: (nuevo)`,
+        tag: '',
+        body: ''
+      };
+      topics.unshift(t);
+      selectedId = t.id;
+      renderList();
+      loadSelected();
+      setStatus('Nuevo tema creado', 'ok');
+      elTitle.focus();
+      elTitle.select();
+    }
+
+    function deleteSelected(){
+      if(topics.length <= 1){
+        setStatus('No puedes borrar el último tema', 'warn');
+        return;
+      }
+      const idx = topics.findIndex(x => x.id === selectedId);
+      if(idx < 0) return;
+      const ok = confirm('¿Eliminar el tema seleccionado?');
+      if(!ok) return;
+      topics.splice(idx, 1);
+      selectedId = topics[0].id;
+      renderList();
+      loadSelected();
+      setStatus('Tema eliminado', 'ok');
+    }
+
+    function preview(){
+      const raw = elBody.value || '(vacío)';
+      // Escape HTML, then convert newlines to <br>. This prevents arbitrary HTML execution
+      // while still allowing MathJax to read $...$ and $$...$$ delimiters.
+      const safe = escapeHtml(raw).replaceAll('\n', '<br>');
+      elPreview.innerHTML = safe;
+      elPreviewWrap.style.display = 'block';
+      setStatus('Vista previa', 'idle');
+
+      // Typeset LaTeX
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetClear?.([elPreview]);
+        window.MathJax.typesetPromise([elPreview]).catch(() => {});
+      }
+    }
+
+    async function copyBody(){
+      try{
+        await navigator.clipboard.writeText(elBody.value || '');
+        setStatus('Copiado', 'ok');
+      }catch(e){
+        setStatus('No se pudo copiar (permiso del navegador)', 'warn');
+      }
+    }
+
+    function exportJSON(){
+      const data = JSON.stringify({ topics }, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'temas_del_dia.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus('Exportado', 'ok');
+    }
+
+    function importJSON(){
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if(!file) return;
+        try{
+          const txt = await file.text();
+          const obj = JSON.parse(txt);
+          if(!obj || !Array.isArray(obj.topics)) throw new Error('Formato inválido');
+          // normalize
+          topics = obj.topics.map(t => ({
+            id: t.id || crypto.randomUUID(),
+            title: String(t.title || 'Sin título'),
+            tag: String(t.tag || ''),
+            body: String(t.body || '')
+          }));
+          if(topics.length === 0) topics = structuredClone(initialTopics);
+          selectedId = topics[0].id;
+          renderList();
+          loadSelected();
+          setStatus('Importado', 'ok');
+        } catch(e){
+          setStatus('Error al importar JSON', 'warn');
+        }
+      };
+      input.click();
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    // Buttons
+    document.getElementById('btnSave').onclick = saveSelected;
+    document.getElementById('btnNew').onclick = newTopic;
+    document.getElementById('btnDelete').onclick = deleteSelected;
+    document.getElementById('btnPreview').onclick = preview;
+    document.getElementById('btnCopy').onclick = copyBody;
+    document.getElementById('btnExport').onclick = exportJSON;
+    document.getElementById('btnImport').onclick = importJSON;
+
+    // Auto status when editing
+    [elTitle, elTag, elBody].forEach(el => el.addEventListener('input', () => setStatus('Sin guardar', 'warn')));
+
+    // Init
+    renderList();
+    loadSelected();
+  </script>
+</body>
+</html>
